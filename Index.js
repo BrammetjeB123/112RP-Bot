@@ -1,15 +1,11 @@
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent
-  ]
+const { Client, GatewayIntentBits } = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+
+client.once('ready', () => {
+  console.log(Bot is ingelogd als ${client.user.tag});
 });
 
-const token = process.env.TOKEN;
-
+client.login(process.env.TOKEN);
 client.once('ready', () => {
   console.log(`Bot is ingelogd als ${client.user.tag}`);
 });
