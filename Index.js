@@ -1,11 +1,9 @@
-const { Client, GatewayIntentBits } = require('discord.js');
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
-client.once('ready', () => {
-  console.log(Bot is ingelogd als ${client.user.tag});
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
-client.login(process.env.TOKEN);
 client.once('ready', () => {
   console.log(`Bot is ingelogd als ${client.user.tag}`);
 });
@@ -19,7 +17,6 @@ client.on('messageCreate', async message => {
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
 
-  // Check of de gebruiker genoeg permissies heeft
   if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
     return message.reply('Je hebt geen permissies voor dit command.');
   }
@@ -58,7 +55,7 @@ client.on('messageCreate', async message => {
       if (!user) return message.reply('Geef een gebruiker om een time-out te geven.');
       if (!user.moderatable) return message.reply('Ik kan deze gebruiker geen time-out geven.');
 
-      const tijd = parseInt(args[1]) || 600; // tijd in seconden, standaard 10 minuten
+      const tijd = parseInt(args[1]) || 600;
       await user.timeout(tijd * 1000);
       message.reply(`${user.user.tag} heeft een time-out gekregen van ${tijd} seconden.`);
     }
@@ -69,7 +66,7 @@ client.on('messageCreate', async message => {
 
       setTimeout(() => {
         channel.delete().catch(console.error);
-      }, 60 * 60 * 1000); // 60 minuten
+      }, 60 * 60 * 1000);
     }
 
     else if (command === 'purge') {
@@ -97,4 +94,4 @@ client.on('messageCreate', async message => {
   }
 });
 
-client.login(token);
+client.login(process.env.TOKEN);
