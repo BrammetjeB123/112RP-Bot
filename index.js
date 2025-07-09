@@ -1,22 +1,28 @@
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 client.once('ready', () => {
   console.log(`Bot is ingelogd als ${client.user.tag}`);
 });
 
+const prefix = '!';
+
 client.on('messageCreate', async message => {
   if (!message.guild || message.author.bot) return;
-
-  const prefix = '!';
   if (!message.content.startsWith(prefix)) return;
 
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
 
+  // Alleen als gebruiker Moderate Members mag
   if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) {
     return message.reply('Je hebt geen permissies voor dit command.');
   }
@@ -26,7 +32,6 @@ client.on('messageCreate', async message => {
       const user = message.mentions.members.first();
       if (!user) return message.reply('Geef een gebruiker om te bannen.');
       if (!user.bannable) return message.reply('Ik kan deze gebruiker niet bannen.');
-
       await user.ban();
       message.reply(`${user.user.tag} is geband.`);
     }
@@ -35,7 +40,6 @@ client.on('messageCreate', async message => {
       const user = message.mentions.members.first();
       if (!user) return message.reply('Geef een gebruiker om te kicken.');
       if (!user.kickable) return message.reply('Ik kan deze gebruiker niet kicken.');
-
       await user.kick();
       message.reply(`${user.user.tag} is gekickt.`);
     }
@@ -44,7 +48,6 @@ client.on('messageCreate', async message => {
       const user = message.mentions.members.first();
       if (!user) return message.reply('Geef een gebruiker om te softbannen.');
       if (!user.bannable) return message.reply('Ik kan deze gebruiker niet bannen.');
-
       await user.ban({ deleteMessageDays: 7 });
       await message.guild.members.unban(user.id);
       message.reply(`${user.user.tag} is softgebanned.`);
@@ -54,7 +57,6 @@ client.on('messageCreate', async message => {
       const user = message.mentions.members.first();
       if (!user) return message.reply('Geef een gebruiker om een time-out te geven.');
       if (!user.moderatable) return message.reply('Ik kan deze gebruiker geen time-out geven.');
-
       const tijd = parseInt(args[1]) || 600;
       await user.timeout(tijd * 1000);
       message.reply(`${user.user.tag} heeft een time-out gekregen van ${tijd} seconden.`);
@@ -62,8 +64,7 @@ client.on('messageCreate', async message => {
 
     else if (command === 'deletechannel') {
       const channel = message.mentions.channels.first() || message.channel;
-      message.reply(`Channel ${channel.name} wordt verwijderd over 60 minuten.`);
-
+      message.reply(`Kanaal ${channel.name} wordt verwijderd over 60 minuten.`);
       setTimeout(() => {
         channel.delete().catch(console.error);
       }, 60 * 60 * 1000);
@@ -86,6 +87,25 @@ client.on('messageCreate', async message => {
       } while (fetched.size >= 2);
 
       message.reply('Berichten verwijderd.');
+    }
+
+    else if (command === 'addrole') {
+      const user = message.mentions.members.first();
+      const role = message.mentions.roles.first();
+      if (!user || !role) {
+        return message.reply('Gebruik: `!addrole @gebruiker @rol`');
+      }
+
+      if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+        return message.reply('Je hebt geen permissies om rollen toe te wijzen.');
+      }
+
+      if (message.guild.members.me.roles.highest.position <= role.position) {
+        return message.reply('Ik kan deze rol niet toevoegen, hij staat boven mijn hoogste rol.');
+      }
+
+      await user.roles.add(role);
+      message.reply(`Rol ${role.name} is toegevoegd aan ${user.user.tag}.`);
     }
 
   } catch (err) {
